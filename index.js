@@ -41,6 +41,21 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+    
+    app.get("/jobs/applicaitons", async (req, res) => {
+      const email = req.query.email;
+      const query = { hr_email: email };
+      const jobs = await jobCollection.find(query).toArray();
+
+      for (const job of jobs) {
+        const applicationQuery = { jobId: job._id.toString() };
+        const application_count = await applicaitonsCollection.countDocuments(
+          applicationQuery
+        );
+        job.application_count = application_count;
+      }
+      res.send(jobs);
+    });
 
     app.get("/jobs/:id", async (req, res) => {
       const id = req.params.id;
@@ -80,10 +95,29 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/applicaitons/job/:job_id", async (req, res) => {
+      const job_id = req.params.job_id;
+      const query = { jobId: job_id };
+      const result = await applicaitonsCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.post("/applications", async (req, res) => {
       const applicaiton = req.body;
       console.log(applicaiton);
       const result = await applicaitonsCollection.insertOne(applicaiton);
+      res.send(result);
+    });
+
+    app.patch("/applications/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: req.body.status,
+        },
+      };
+      const result = await applicaitonsCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
